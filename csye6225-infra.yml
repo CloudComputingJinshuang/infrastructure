@@ -28,6 +28,22 @@ Parameters:
     Description: Please enter the IP range (CIDR notation) for the public subnet in the third Availability Zone
     Type: String
     Default: 10.192.12.0/24
+  
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: csye_ec2
+
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+
+  AMIid:
+    Description: ami id for building instance
+    Type: String
+    Default: 'ami-0837589bd4b2dcb00'
+
 
 Resources:
   VPC:
@@ -86,18 +102,6 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} Public Subnet (AZ3)
 
-  NatGateway1EIP:
-    Type: AWS::EC2::EIP
-    DependsOn: InternetGatewayAttachment
-    Properties:
-      Domain: vpc
-
-  NatGateway1:
-    Type: AWS::EC2::NatGateway
-    Properties:
-      AllocationId: !GetAtt NatGateway1EIP.AllocationId
-      SubnetId: !Ref PublicSubnet1
-
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
@@ -138,6 +142,55 @@ Resources:
       GroupName: 'no-ingress-sg'
       GroupDescription: 'Security group with no ingress rule'
       VpcId: !Ref VPC
+  
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC
+      GroupDescription: Enable SSH access via port 22 and http access
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: '0.0.0.0/0'
+
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      SecurityGroupIds: 
+        - !Ref InstanceSecurityGroup
+      KeyName: !Ref KeyName
+      ImageId: !Ref AMIid
+      SubnetId: !Ref PublicSubnet1
+      DisableApiTermination: true
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp2
+            VolumeSize: '20'
+            DeleteOnTermination: 'false'
+            Encrypted: 'true'
+      UserData:
+        Fn::Base64:
+          !Sub |
+          #!/bin/bash
+          cd /tmp
+          mvn -N io.takari:maven:wrapper
+          ./mvnw spring-boot:run
 
 Outputs:
   VPC:
