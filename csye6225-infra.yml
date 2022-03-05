@@ -39,6 +39,12 @@ Parameters:
     Type: String
     Default: t2.micro
 
+  AMIid:
+    Description: ami id for building instance
+    Type: String
+    Default: 'ami-0837589bd4b2dcb00'
+
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -145,12 +151,12 @@ Resources:
       GroupDescription: Enable SSH access via port 22 and http access
       SecurityGroupIngress:
       - IpProtocol: tcp
-        FromPort: 22
-        ToPort: 22
-        CidrIp: '0.0.0.0/0'
-      - IpProtocol: tcp
         FromPort: 80
         ToPort: 80
+        CidrIp: '0.0.0.0/0'
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
         CidrIp: '0.0.0.0/0'
       - IpProtocol: tcp
         FromPort: 443
@@ -168,7 +174,7 @@ Resources:
       SecurityGroupIds: 
         - !Ref InstanceSecurityGroup
       KeyName: !Ref KeyName
-      ImageId: 'ami-0bb0cd1322b499ada'
+      ImageId: !Ref AMIid
       SubnetId: !Ref PublicSubnet1
       DisableApiTermination: true
       BlockDeviceMappings:
@@ -178,15 +184,13 @@ Resources:
             VolumeSize: '20'
             DeleteOnTermination: 'false'
             Encrypted: 'true'
-  UserData:
-        FN::Base64:
-        !Sub |
+      UserData:
+        Fn::Base64:
+          !Sub |
           #!/bin/bash
           cd /tmp
-          ls -a
+          mvn -N io.takari:maven:wrapper
           ./mvnw spring-boot:run
-      
-
 
 Outputs:
   VPC:
