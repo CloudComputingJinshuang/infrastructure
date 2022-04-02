@@ -57,7 +57,7 @@ Parameters:
   AMIid:
     Description: ami id for building instance
     Type: String
-    Default: 'ami-05281de3127209ba7'
+    Default: 'ami-0e84fb03c33b74388'
   
   DatabaseType:
     Type: String
@@ -625,3 +625,46 @@ Resources:
         AliasTarget:
           HostedZoneId: !GetAtt 'loadBalancer.CanonicalHostedZoneID'
           DNSName: !GetAtt 'loadBalancer.DNSName'
+
+
+  CodeDeployApplication: 
+    Type: AWS::CodeDeploy::Application 
+    Properties:
+      ApplicationName: 'csye6225-webapp'
+      ComputePlatform: Server
+
+
+  CodeDeployRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "codedeploy.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        -
+          PolicyName: allow-autoscaling
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              -
+                Effect: Allow
+                Action:
+                  - ec2:*
+                  - autoscaling:*
+                Resource: "*"       
+  WebappDeploymentGroup:
+    Type: "AWS::CodeDeploy::DeploymentGroup"
+    Properties:
+      DeploymentGroupName: "csye6225-webapp-deployment"
+      ApplicationName: !Ref CodeDeployApplication
+      ServiceRoleArn: !GetAtt CodeDeployRole.Arn
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      AutoScalingGroups:
+      - Ref: asgAutoScalingGroup
