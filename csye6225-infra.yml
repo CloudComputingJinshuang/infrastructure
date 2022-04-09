@@ -51,7 +51,7 @@ Parameters:
   ImageIdNumber:
     Description: Please enter the ImageId for the Web App Instance
     Type: String
-    Default: ami-0b46edf9fe0b83028
+    Default: ami-0110000b3d1f208aa
 
   BucketName:
     Description: Please enter name for the S3 bucket
@@ -465,6 +465,14 @@ Resources:
           #!/bin/bash
 
           cd /tmp 
+          touch csye6225.log
+          sudo chmod -R 777 /tmp
+          echo "logging.file.name =/tmp/csye6225.log" >> /tmp/jdbc.properties
+          echo "logging.level.root =info" >> /tmp/jdbc.properties
+          echo "logging.level.org.springframework.web =info" >> /tmp/jdbc.properties
+          echo "logging.level.org.hibernate =info" >> /tmp/jdbc.properties
+
+
           echo "spring.datasource.url = jdbc:mysql://${DBinstance.Endpoint.Address}:3306/csye6225" >> /tmp/jdbc.properties
           echo "spring.datasource.username = csye6225" >> /tmp/jdbc.properties
           echo "spring.datasource.password =  Njs862459063!" >> /tmp/jdbc.properties
@@ -477,7 +485,9 @@ Resources:
           echo "aws.s3.region= us-west-2" >> /tmp/jdbc.properties
           echo "aws.s3.bucket= ${S3Bucket}" >> /tmp/jdbc.properties
 
-
+          echo "publish.metrics = true" >> /tmp/jdbc.properties
+          echo "metrics.server.hostname = localhost" >> /tmp/jdbc.properties
+          echo "metrics.server.port = 8125" >> /tmp/jdbc.properties
           crontab -l | { cat; echo "@reboot (cd /tmp && nohup java -jar /tmp/demo1-0.0.1-SNAPSHOT.jar --spring.config.location=jdbc.properties > /dev/null 2> /dev/null < /dev/null & echo $! > ./pid.file &)"; } | crontab -
           cd /tmp
           # java -jar demo1-0.0.1-SNAPSHOT.jar --spring.config.location=file:///tmp/jdbc.properties
@@ -673,6 +683,30 @@ Resources:
       AutoScalingGroups:
       - Ref: asgWebApp
 
+  ClockAgentPolicy: 
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: ClockAgentPolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'cloudwatch:PutMetricData'
+              - 'ec2:DescribeVolumes'
+              - 'ec2:DescribeTags'
+              - 'logs:PutLogEvents'
+              - 'logs:DescribeLogStreams'
+              - 'logs:DescribeLogGroups'
+              - 'logs:CreateLogStream'
+              - 'logs:CreateLogGroup'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'ssm:GetParameter'
+            Resource: 'arn:aws:ssm:*:*:parameter/AmazonCloudWatch-*'
+      Roles:
+        - !Ref IAMRole
 Outputs:
   VPC:
     Description: A reference to the created VPC
