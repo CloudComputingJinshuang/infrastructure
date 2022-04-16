@@ -1,0 +1,82 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Parameters:
+  TopicName:
+    Type: String
+    Description:  Topic Name
+    Default: snstopic
+
+Resources: 
+
+  SNSResource:
+    Type: AWS::SNS::Topic
+    Properties: 
+      DisplayName: SNSService
+      FifoTopic: False
+      TopicName: !Ref TopicName
+      Subscription:
+        - Protocol: lambda
+          Endpoint: arn:aws:lambda:us-west-2:451421159665:function:serverless
+  primer:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: nodejs12.x
+      Role: arn:aws:iam::123456789012:role/lambda-role
+      Handler: com.example.demo.VerifyEmailEvent.handleRequest
+      Code:
+        S3Bucket: jinshuangbucket
+        S3Key: demo.zip
+      Description: Invoke a function during stack creation.
+      TracingConfig:
+        Mode: Active
+
+  ExampleFunctionInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref primer
+      Principal: sns.amazonaws.com   
+
+  ExampleTopicPolicy:
+    Type: 'AWS::SNS::TopicPolicy'
+    Properties:
+      Topics:
+        - !Ref SNSResource
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 'sns:Publish'
+            Resource: !Ref SNSResource
+            Principal:
+              AWS: '*'
+            Condition:
+              ArnLike:
+                AWS:SourceArn: !Sub 'arn:aws:*:*:${AWS::AccountId}:*'
+
+  tokenDynamoDBTable: 
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "TOKENS"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S    
+      KeySchema: 
+        - AttributeName: email
+          KeyType: "HASH"   
+      TimeToLiveSpecification:
+        AttributeName: TimeToLive
+        Enabled: true
+  sentDynamoDBTable: 
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: "SENTS"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S 
+      KeySchema: 
+        - AttributeName: email
+          KeyType: "HASH"  
