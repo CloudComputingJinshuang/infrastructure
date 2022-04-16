@@ -404,6 +404,7 @@ Resources:
             Resource: '*'
       Roles:
         - !Ref IAMRole
+        - !Ref MyLambdaRole
 
   IAMRole:
     Type: AWS::IAM::Role
@@ -738,7 +739,7 @@ Resources:
   WebAppSNSTopic:
       Type: AWS::SNS::Topic
       Properties:
-        TopicName: "csye6225-webapp-topic"
+        TopicName: "message"
         FifoTopic: "false"
         Subscription:
           - Endpoint: arn:aws:lambda:us-west-2:451421159665:function:vemailFunction
