@@ -66,7 +66,7 @@ Parameters:
   AccessKey:
     Description: Please enter name for the S3 bucket
     Type: String
-    Default: SCEjGJh6xtl5DoXRqdFnk6V6xNdyOJsgmjI5XagQ
+    Default: null
 
   Region:
     Description: Please enter name for the S3 bucket
@@ -498,13 +498,13 @@ Resources:
 
           echo "spring.datasource.url = jdbc:mysql://${DBinstance.Endpoint.Address}:3306/csye6225" >> /tmp/jdbc.properties
           echo "spring.datasource.username = csye6225" >> /tmp/jdbc.properties
-          echo "spring.datasource.password =  Njs862459063!" >> /tmp/jdbc.properties
+          echo "spring.datasource.password = password" >> /tmp/jdbc.properties
 
           echo "spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL5InnoDBDialect" >> /tmp/jdbc.properties
           echo "spring.jpa.hibernate.ddl-auto = update" >> /tmp/jdbc.properties
 
           echo "aws.access_key_id = AKIAWSGWMIDYQOL66HRG" >> /tmp/jdbc.properties
-          echo "aws.secret_access_key= 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" >> /tmp/jdbc.properties
+          echo "aws.secret_access_key= null" >> /tmp/jdbc.properties
           echo "aws.s3.region= us-west-2" >> /tmp/jdbc.properties
           echo "aws.s3.bucket= ${S3Bucket}" >> /tmp/jdbc.properties
 
