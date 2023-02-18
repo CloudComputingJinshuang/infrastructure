@@ -21,11 +21,11 @@ Parameters:
   
   AWSProfileKeyID:
     Type: String
-    Default: 'AKIAWSGWMIDYTNEZE5U2'
+    Default: 'null'
 
   AWSProfileSecretKey:
     Type: String
-    Default: 'rPH1yOBJkzWQmTdHOzkJujGDwczquVgcEjiardYK'
+    Default: 'null'
 
   AWSProfileRegion:
     Type: String
